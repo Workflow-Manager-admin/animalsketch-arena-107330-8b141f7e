@@ -14,11 +14,14 @@ export async function loginAnonymously(username) {
    *
    * Note: Using modular SDK methods imported directly from 'firebase/auth'.
    */
+  console.log("[auth.js] loginAnonymously called. username=", username);
   await signInAnonymously(auth);
   // Assign displayName only if provided
   if (username) {
     await updateProfile(auth.currentUser, { displayName: username });
+    console.log("[auth.js] Updated anonymous user profile with displayName:", username);
   }
+  console.log("[auth.js] Anonymous login after signIn: ", auth.currentUser);
   return auth.currentUser;
 }
 
@@ -28,6 +31,7 @@ export function onUserAuthStateChanged(callback) {
    * Subscribe to auth state changes. Returns unsubscribe function.
    * Note: Uses onAuthStateChanged imported directly.
    */
+  console.log("[auth.js] Subscribing to auth state changes");
   return onAuthStateChanged(auth, callback);
 }
 

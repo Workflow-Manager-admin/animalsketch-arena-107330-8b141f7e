@@ -22,21 +22,29 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleStart = async () => {
-    if (!username.trim()) return;
+    console.log("[LoginPage] Start button clicked, username:", username);
+    if (!username.trim()) {
+      console.warn("[LoginPage] No username provided.");
+      return;
+    }
     setLoading(true);
     try {
-      await loginAnonymously(username.trim());
+      const user = await loginAnonymously(username.trim());
+      console.log("[LoginPage] loginAnonymously resolved. FB User:", user);
       // Wait for Firebase to confirm user is logged in before navigating
       const unsub = require("../utils/auth").onUserAuthStateChanged((user) => {
+        console.log("[LoginPage] onUserAuthStateChanged callback fired. user:", user);
         if (user) {
           unsub(); // Clean up
           setLoading(false);
+          console.log("[LoginPage] User is now logged in, navigating to /dashboard");
           navigate("/dashboard");
         }
       });
     } catch (e) {
       // Display error to user (optional)
       alert("Login failed: " + e.message);
+      console.error("[LoginPage] Login failed!", e);
       setLoading(false);
     }
   };
