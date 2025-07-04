@@ -26,7 +26,14 @@ function LoginPage() {
     setLoading(true);
     try {
       await loginAnonymously(username.trim());
-      navigate("/dashboard");
+      // Wait for Firebase to confirm user is logged in before navigating
+      const unsub = require("../utils/auth").onUserAuthStateChanged((user) => {
+        if (user) {
+          unsub(); // Clean up
+          setLoading(false);
+          navigate("/dashboard");
+        }
+      });
     } catch (e) {
       // Display error to user (optional)
       alert("Login failed: " + e.message);
