@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import LogoMascot from "../components/LogoMascot";
 import PlayfulButton from "../components/PlayfulButton";
 import LucideIcon from "../components/LucideIcon";
-import { loginAnonymously } from "../utils/auth";
+import { loginAnonymously, onUserAuthStateChanged } from "../utils/auth";
 
+// Picks a random animal emoji-style name for the placeholder
 function randomAnimalName() {
   const animals = ["Panda", "Otter", "Penguin", "Parrot", "Cat", "Dog", "Frog", "Bunny"];
   const adjectives = ["Wiggly", "Jumpy", "Sunny", "Happy", "Fluffy", "Quick", "Chill", "Bouncy"];
@@ -17,36 +18,67 @@ function randomAnimalName() {
 // PUBLIC_INTERFACE
 function LoginPage() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState(() => "");
+  const [username, setUsername] = useState("");
   const [focus, setFocus] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Ensures side-effect-free user state reset for rare repeated visits (defensive)
+  React.useEffect(() => {
+    setError(null);
+    setLoading(false);
+  }, []);
+
+  // Handles the login and feedback state
   const handleStart = async () => {
+    setError(null);
     console.log("[LoginPage] Start button clicked, username:", username);
     if (!username.trim()) {
+      setError("Please enter a username!");
       console.warn("[LoginPage] No username provided.");
       return;
     }
     setLoading(true);
+
     try {
       const user = await loginAnonymously(username.trim());
       console.log("[LoginPage] loginAnonymously resolved. FB User:", user);
-      // Wait for Firebase to confirm user is logged in before navigating
-      const unsub = require("../utils/auth").onUserAuthStateChanged((user) => {
-        console.log("[LoginPage] onUserAuthStateChanged callback fired. user:", user);
-        if (user) {
-          unsub(); // Clean up
+
+      // Do a single-time auth state listener with timeout fallback in case navigation stalls
+      let unsub = null;
+      let routed = false;
+      unsub = onUserAuthStateChanged((fbUser) => {
+        console.log("[LoginPage] onUserAuthStateChanged callback fired. user:", fbUser);
+        if (fbUser && !routed) {
+          routed = true;
+          unsub && unsub();
           setLoading(false);
           console.log("[LoginPage] User is now logged in, navigating to /dashboard");
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
         }
       });
+      // Fallback in case onUserAuthStateChanged does not fire (shouldn't, but async bugs may happen)
+      setTimeout(() => {
+        if (!routed) {
+          setLoading(false);
+          setError(
+            "Login succeeded, but navigation failed. Try reloading the page, or check your connection."
+          );
+          unsub && unsub();
+        }
+      }, 6000); // 6 seconds, ample for Firebase
+
     } catch (e) {
-      // Display error to user (optional)
-      alert("Login failed: " + e.message);
+      setError("Login failed: " + (e.message || "Unknown error"));
       console.error("[LoginPage] Login failed!", e);
       setLoading(false);
     }
+  };
+
+  // Handler for pressing Enter or button click
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    handleStart();
   };
 
   return (
@@ -55,27 +87,38 @@ function LoginPage() {
         <LogoMascot className="mb-5" />
         <form
           className="flex flex-col gap-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleStart();
-          }}
+          onSubmit={handleFormSubmit}
         >
           <input
             type="text"
             value={username}
             placeholder={"Username (e.g. " + randomAnimalName() + ")"}
-            onChange={e => setUsername(e.target.value)}
+            onChange={e => {
+              setUsername(e.target.value);
+              setError(null);
+            }}
             onFocus={() => setFocus(true)}
             onBlur={() => setFocus(false)}
             className={`rounded-xl border bg-bgDoodle py-3 px-5 w-full font-heading text-lg transition-all duration-200 focus:ring-2 focus:ring-primary outline-none shadow ${focus ? "animate-wiggle border-accentPink" : "border-pastelPurple"}`}
             maxLength={18}
             autoFocus
+            disabled={loading}
+            aria-invalid={!!error}
+            aria-describedby={error ? "login-error-msg" : undefined}
           />
+          {error && (
+            <div id="login-error-msg" className="text-accentPink text-center font-heading text-sm -mt-3">
+              <LucideIcon name="bird" className="inline-block w-5 h-5 mr-1 -mt-1 align-middle" />
+              {error}
+            </div>
+          )}
           <PlayfulButton
             type="submit"
             className="mt-2 flex items-center justify-center gap-2"
             aria-label="Start"
-            disabled={!username}
+            disabled={!username || loading}
+            tabIndex={0}
+            onClick={handleStart}
           >
             <LucideIcon name="bird" className="w-6 h-6 -ml-2" />
             {loading ? "Starting..." : "Start"}

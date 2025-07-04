@@ -23,6 +23,25 @@ export const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
+// Warn if any Firebase env config keys are missing (defensive for deployment and dev setup)
+const firebaseVars = [
+  "REACT_APP_FIREBASE_API_KEY",
+  "REACT_APP_FIREBASE_AUTH_DOMAIN",
+  "REACT_APP_FIREBASE_PROJECT_ID",
+  "REACT_APP_FIREBASE_STORAGE_BUCKET",
+  "REACT_APP_FIREBASE_MESSAGING_SENDER_ID",
+  "REACT_APP_FIREBASE_APP_ID",
+];
+const missingVars = firebaseVars.filter((k) => !process.env[k]);
+if (missingVars.length) {
+  // eslint-disable-next-line no-console
+  console.error(
+    "[firebase.js] ERROR: Missing Firebase env config for keys:",
+    missingVars,
+    ". Firebase will fail to initialize! Please create .env.local in app root."
+  );
+}
+
 console.log("[firebase.js] Firebase config loaded:", {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
