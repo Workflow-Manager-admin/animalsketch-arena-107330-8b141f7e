@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Custom global styles */
+body {
+  @apply bg-bgPaper font-body;
+}
+.font-heading {
+  font-family: Fredoka, Poppins, Nunito, sans-serif;
+}
+.font-title {
+  font-family: Bungee, 'Press Start 2P', Fredoka, sans-serif;
+}
+.font-body {
+  font-family: Inter, 'Open Sans', Quicksand, sans-serif;
+}
