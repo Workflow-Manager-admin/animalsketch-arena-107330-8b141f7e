@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import LogoMascot from "../components/LogoMascot";
 import PlayfulButton from "../components/PlayfulButton";
 import LucideIcon from "../components/LucideIcon";
+import { loginAnonymously } from "../utils/auth";
 
 function randomAnimalName() {
   const animals = ["Panda", "Otter", "Penguin", "Parrot", "Cat", "Dog", "Frog", "Bunny"];
@@ -20,13 +21,17 @@ function LoginPage() {
   const [focus, setFocus] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!username.trim()) return;
     setLoading(true);
-    setTimeout(() => {
-      // Here you would handle login/anon registration
+    try {
+      await loginAnonymously(username.trim());
       navigate("/dashboard");
-    }, 1000);
+    } catch (e) {
+      // Display error to user (optional)
+      alert("Login failed: " + e.message);
+      setLoading(false);
+    }
   };
 
   return (

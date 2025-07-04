@@ -11,6 +11,15 @@ This project provides a minimal React template with a clean, modern UI and minim
 
 ## Getting Started
 
+### 🔥 Firebase Setup
+
+This project uses Firebase for Auth and database (Firestore). To set up:
+
+1. Create a Firebase project at https://console.firebase.google.com/
+2. Enable **Authentication** (Anonymous sign-in) and **Firestore Database**.
+3. Get your Firebase config from Project Settings, add it to a file named `.env` in this folder (see `.env.example`).
+4. Install dependencies (`npm install`). The app will auto-connect to Firebase when run locally.
+
 In the project directory, you can run:
 
 ### `npm start`

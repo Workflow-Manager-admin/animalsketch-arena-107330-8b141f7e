@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import PlayfulButton from "../components/PlayfulButton";
 import LucideIcon from "../components/LucideIcon";
 import { motion, AnimatePresence } from "framer-motion";
+import { uploadDrawing } from "../utils/firestore";
+import { getCurrentUser } from "../utils/auth";
 
 const prompts = [
   "Dancing Panda", "Rocket Bird", "Magical Axolotl", "Running Pig", "Skateboard Cat"
@@ -15,6 +17,7 @@ function DrawingPage() {
   const [prompt, setPrompt] = useState(prompts[Math.floor(Math.random() * prompts.length)]);
   const [showPrompt, setShowPrompt] = useState(true);
   const [drawingData, setDrawingData] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (time === 0) return;
@@ -29,10 +32,32 @@ function DrawingPage() {
     setTimeout(() => setPrompt(prompts[Math.floor(Math.random() * prompts.length)]), 400);
     setTimeout(() => setShowPrompt(true), 600);
   };
-  const handleSubmit = () => {
-    // TODO: post drawingData
-    navigate("/dashboard");
+
+  // Would take canvas data (here just null/stub), prompt, and send to Firestore
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    const user = getCurrentUser();
+    if (!user) {
+      alert("You must be logged in!");
+      setSubmitting(false);
+      return;
+    }
+    try {
+      const image = drawingData || ""; // TODO: wire to canvas as base64, here stub as empty
+      await uploadDrawing({
+        prompt,
+        image,
+        authorId: user.uid,
+        authorName: user.displayName || "",
+        createdAt: new Date().toISOString()
+      });
+      navigate("/dashboard");
+    } catch (err) {
+      alert("Failed to upload drawing: " + err.message);
+      setSubmitting(false);
+    }
   };
+
   // Canvas is a stub here
   return (
     <div className="min-h-screen flex flex-col items-center gap-4 pt-10 px-2 relative">
@@ -111,9 +136,9 @@ function DrawingPage() {
           <LucideIcon name="plus" className="w-5 h-5 mr-2" />
           Reset
         </PlayfulButton>
-        <PlayfulButton variant="primary" onClick={handleSubmit}>
+        <PlayfulButton variant="primary" onClick={handleSubmit} disabled={submitting}>
           <LucideIcon name="pencil" className="w-5 h-5 mr-2" />
-          Submit Drawing
+          {submitting ? "Submitting..." : "Submit Drawing"}
         </PlayfulButton>
       </div>
     </div>
