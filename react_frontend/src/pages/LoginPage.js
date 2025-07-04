@@ -44,11 +44,25 @@ function LoginPage() {
       const user = await loginAnonymously(username.trim());
       console.log("[LoginPage] loginAnonymously resolved. FB User:", user);
 
-      // Do a single-time auth state listener with timeout fallback in case navigation stalls
+      // Capture the response of loginAnonymously for diagnostic
+      if (!user) {
+        setLoading(false);
+        setError("Login failed: No user returned from Firebase. Check your connection and configuration.");
+        console.error("[LoginPage] loginAnonymously returned no user object.");
+        return;
+      }
+
+      // One-time auth state listener (should fire nearly instantly)
       let unsub = null;
       let routed = false;
       unsub = onUserAuthStateChanged((fbUser) => {
         console.log("[LoginPage] onUserAuthStateChanged callback fired. user:", fbUser);
+        if (!fbUser) {
+          setError("Authentication error: No user is signed in after login. Please check your Firebase setup.");
+          setLoading(false);
+          unsub && unsub();
+          return;
+        }
         if (fbUser && !routed) {
           routed = true;
           unsub && unsub();
@@ -62,14 +76,22 @@ function LoginPage() {
         if (!routed) {
           setLoading(false);
           setError(
-            "Login succeeded, but navigation failed. Try reloading the page, or check your connection."
+            "Login succeeded, but navigation to dashboard failed. This is likely a networking or Firebase state error. Try reloading the page, check your internet connection, or verify the Firebase config."
           );
           unsub && unsub();
         }
       }, 6000); // 6 seconds, ample for Firebase
 
     } catch (e) {
-      setError("Login failed: " + (e.message || "Unknown error"));
+      let errMsg =
+        (e && e.message) ||
+        (typeof e === "string" ? e : null) ||
+        "Unknown error";
+      // Try to surface some Firebase error codes
+      if (e && e.code) {
+        errMsg += " (code: " + e.code + ")";
+      }
+      setError("Login failed: " + errMsg);
       console.error("[LoginPage] Login failed!", e);
       setLoading(false);
     }

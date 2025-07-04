@@ -41,31 +41,49 @@ function validateFirebaseEnv() {
 }
 validateFirebaseEnv();
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * Login anonymously, then set displayName. Returns Firebase user object.
+ */
 export async function loginAnonymously(username) {
-  /**
-   * Login anonymously, then set the displayName to username.
-   * Returns the Firebase user object.
-   *
-   * Note: Using modular SDK methods imported directly from 'firebase/auth'.
-   * Throws an error if login fails.
-   */
   try {
     console.log("[auth.js] loginAnonymously called. username=", username);
-    await signInAnonymously(auth);
-    // Assign displayName only if provided
+
+    // Clear any previous user to avoid collision (very rare)
+    // Note: Sign out (optional/safe, can uncomment if you want strict stateless login attempts)
+    // try { await signOut(auth); } catch (e) {}
+
+    // Defensive: Pre-login Firebase env checks
+    if (!auth) {
+      console.error("[auth.js] CRITICAL: Firebase 'auth' not initialized. Check firebase.js.");
+      throw new Error("App auth not initialized. Please check your Firebase config/environment.");
+    }
+
+    // Begin anonymous sign-in flow
+    const credResult = await signInAnonymously(auth);
+    // credResult.user or use auth.currentUser for latest
+    let currentUser = auth.currentUser;
+    if (!currentUser && credResult && credResult.user) {
+      currentUser = credResult.user;
+    }
+    if (!currentUser) {
+      throw new Error("No user returned by Firebase anonymous login (credResult/user is missing)");
+    }
+
+    // Assign displayName if provided
     if (username) {
-      await updateProfile(auth.currentUser, { displayName: username });
+      await updateProfile(currentUser, { displayName: username });
       console.log("[auth.js] Updated anonymous user profile with displayName:", username);
     }
-    console.log("[auth.js] Anonymous login after signIn: ", auth.currentUser);
-    // Defensive: check returned user object
-    if (!auth.currentUser) {
-      throw new Error("No user returned by Firebase anonymous login");
-    }
-    return auth.currentUser;
+    console.log("[auth.js] Anonymous login after signIn: ", currentUser);
+
+    return currentUser;
   } catch (e) {
     console.error("[auth.js] loginAnonymously error:", e);
+    // Surface more details with Firebase errors (e.code, e.customData, etc.)
+    if (e && e.code) {
+      console.error("[auth.js] Firebase error code:", e.code);
+    }
     throw e;
   }
 }
