@@ -11,6 +11,8 @@ export async function loginAnonymously(username) {
   /**
    * Login anonymously, then set the displayName to username.
    * Returns the Firebase user object.
+   *
+   * Note: Using modular SDK methods imported directly from 'firebase/auth'.
    */
   await signInAnonymously(auth);
   // Assign displayName only if provided
@@ -24,6 +26,7 @@ export async function loginAnonymously(username) {
 export function onUserAuthStateChanged(callback) {
   /**
    * Subscribe to auth state changes. Returns unsubscribe function.
+   * Note: Uses onAuthStateChanged imported directly.
    */
   return onAuthStateChanged(auth, callback);
 }
@@ -40,6 +43,7 @@ export function getCurrentUser() {
 export async function logout() {
   /**
    * Logs out the current user.
+   * Note: Uses modular signOut imported directly.
    */
   await signOut(auth);
 }

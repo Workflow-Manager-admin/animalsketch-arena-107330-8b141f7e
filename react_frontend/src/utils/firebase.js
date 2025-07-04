@@ -23,8 +23,12 @@ export const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
+// PUBLIC_INTERFACE
 const app = initializeApp(firebaseConfig);
 
-// Export Firestore and Auth instances (for modular v9+ SDK)
+// PUBLIC_INTERFACE
 export const db = getFirestore(app);
+// PUBLIC_INTERFACE
 export const auth = getAuth(app);
+// Note: DO NOT export or re-export signInAnonymously, updateProfile, onAuthStateChanged, signOut, etc. from this file.
+// Import these directly where needed using: import { signInAnonymously, ... } from "firebase/auth";
