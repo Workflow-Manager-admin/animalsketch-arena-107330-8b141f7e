@@ -1,4 +1,10 @@
-import { auth, signInAnonymously, updateProfile, onAuthStateChanged, signOut } from "./firebase";
+import { auth } from "./firebase";
+import {
+  signInAnonymously,
+  updateProfile,
+  onAuthStateChanged,
+  signOut,
+} from "firebase/auth";
 
 // PUBLIC_INTERFACE
 export async function loginAnonymously(username) {
@@ -6,7 +12,7 @@ export async function loginAnonymously(username) {
    * Login anonymously, then set the displayName to username.
    * Returns the Firebase user object.
    */
-  const cred = await signInAnonymously(auth);
+  await signInAnonymously(auth);
   // Assign displayName only if provided
   if (username) {
     await updateProfile(auth.currentUser, { displayName: username });

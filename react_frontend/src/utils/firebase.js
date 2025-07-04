@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, signInAnonymously, updateProfile, onAuthStateChanged, signOut } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 
 /**
  * Firebase configuration is loaded from environment.
@@ -25,12 +25,6 @@ export const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+// Export Firestore and Auth instances (for modular v9+ SDK)
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-
-export {
-  signInAnonymously,
-  updateProfile,
-  onAuthStateChanged,
-  signOut
-};
